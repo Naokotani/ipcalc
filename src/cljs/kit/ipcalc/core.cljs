@@ -52,10 +52,6 @@ represetation of the same value."
                                 (+ total (exp 2 (- (count bits) 1)))
                                 total)))))
 
-(comment
-  (host-bits "255" "255" "255" "192")
-  )
-
 (defn host-bits [sub-one sub-two sub-three sub-four]
   (let [mask (str
               (calc-bits sub-one) " "
@@ -212,27 +208,100 @@ each octet"
                 "1" "1" "1" "1" "1" "1" "1" "1" ]))
 
   (display-bin-ip-test 13 bin-ip)
-  (display-bin-ip 3 3))
+  (display-bin-ip 3 3)
+  )
 
-;; (defn display-bin-ip [host-bits bin-ip]
-;;   (fn []
-;;   [:p.mono 
-;;    (loop [bit-i 0 bits bin-ip]
-;;      (if (not (empty? bits))
-;;        (if (= "|" (first bits))
-;;          (do [:span.divider (first bits)] (recur bit-i (rest bits)))
-;;          (cond (< (- 31 host-bits ) bit-i) (do [:span.host (first bits)] (recur (inc bit-i) (rest bits)))
-;;                :else (do [:span.network (first bits)] (recur (inc bit-i) (rest bits)))))))]))
 
-  ;; (let [host-bits (r/atom (host-bits @sub-one @sub-two @sub-three @sub-four))
-  ;;       bin-ip (r/atom (str/split (str (calc-bits @bit-one) " | "
-  ;;                      (calc-bits @bit-two) " | "
-  ;;                      (calc-bits @bit-three) " | "
-  ;;                      (calc-bits @bit-four)) " "))
-  ;;       bin-subnet (r/atom (str/split (str (calc-bits @sub-one) " | "
-  ;;                          (calc-bits @sub-two) " | "
-  ;;                          (calc-bits @sub-three) " | "
-  ;;                          (calc-bits @sub-four)) " " ))]
+      ;; "Broadcast address: "
+      ;; (calc-bits (last-subnet @sub-one (apply-mask->decimal @bit-one @sub-one))) " | "
+      ;; (calc-bits (last-subnet @sub-two (apply-mask->decimal @bit-two @sub-two))) " | "
+      ;; (calc-bits (last-subnet @sub-three (apply-mask->decimal @bit-three @sub-three))) " | "
+      ;; (calc-bits (last-subnet @sub-four (apply-mask->decimal @bit-four @sub-four))) " --- "
+      ;; (last-subnet @sub-one (apply-mask->decimal @bit-one @sub-one)) "."
+      ;; (last-subnet @sub-two (apply-mask->decimal @bit-two @sub-two)) "."
+      ;; (last-subnet @sub-three (apply-mask->decimal @bit-three @sub-three)) "."
+      ;; (last-subnet @sub-four (apply-mask->decimal @bit-four @sub-four))]
+
+(defn broadcast []
+  (fn []
+    [:p.mono "Broadcast Address:"
+     (loop [bit-i 1 bits (reverse (str/split (str (calc-bits(last-subnet @sub-one (apply-mask->decimal @bit-one @sub-one))) " | "
+                                         (calc-bits (last-subnet @sub-two (apply-mask->decimal @bit-two @sub-two))) " | "
+                                         (calc-bits (last-subnet @sub-three (apply-mask->decimal @bit-three @sub-three))) " | "
+                                         (calc-bits (last-subnet @sub-four (apply-mask->decimal @bit-four @sub-four)))) " " ))
+            spans '()]
+       (if (empty? bits)
+         spans
+         (if (= "|" (first bits))
+           (recur bit-i (rest bits) (conj spans [:span.divider " " (first bits) " "]))
+           (cond (< (host-bits @sub-one @sub-two @sub-three @sub-four) bit-i)
+                 (recur (inc bit-i) (rest bits) (conj spans [:span.network " " (first bits) " "]))
+                 :else (recur (inc bit-i) (rest bits) (conj spans [:span.host " " (first bits) " "]))))))
+     " --- " (last-subnet @sub-one (apply-mask->decimal @bit-one @sub-one))
+     "." (last-subnet @sub-two (apply-mask->decimal @bit-two @sub-two))
+     "." (last-subnet @sub-three (apply-mask->decimal @bit-three @sub-three))
+     "." (last-subnet @sub-four (apply-mask->decimal @bit-four @sub-four))]))
+
+
+(defn last-host []
+  (fn []
+    [:p.mono "Last host:::::::::"
+     (loop [bit-i 1 bits (reverse (str/split (str (calc-bits (last-subnet @sub-one (apply-mask->decimal @bit-one @sub-one))) " | "
+                                         (calc-bits (last-subnet @sub-two (apply-mask->decimal @bit-two @sub-two))) " | "
+                                         (calc-bits (last-subnet @sub-three (apply-mask->decimal @bit-three @sub-three))) " | "
+                                         (calc-bits (- (js/parseInt (last-subnet @sub-four (apply-mask->decimal @bit-four @sub-four))) 1))) " " ))
+            spans '()]
+       (if (empty? bits)
+         spans
+         (if (= "|" (first bits))
+           (recur bit-i (rest bits) (conj spans [:span.divider " " (first bits) " "]))
+           (cond (< (host-bits @sub-one @sub-two @sub-three @sub-four) bit-i)
+                 (recur (inc bit-i) (rest bits) (conj spans [:span.network " " (first bits) " "]))
+                 :else (recur (inc bit-i) (rest bits) (conj spans [:span.host " " (first bits) " "]))))))
+     " --- " (last-subnet @sub-one (apply-mask->decimal @bit-one @sub-one))
+     "." (last-subnet @sub-two (apply-mask->decimal @bit-two @sub-two))
+     "." (last-subnet @sub-three (apply-mask->decimal @bit-three @sub-three))
+     "." (- (js/parseInt (last-subnet @sub-four (apply-mask->decimal @bit-four @sub-four))) 1)]))
+
+(defn first-host []
+  (fn []
+    [:p.mono "First host::::::::"
+     (loop [bit-i 1 bits (reverse (str/split (str (apply-mask @bit-one @sub-one) " | "
+                                         (apply-mask @bit-two @sub-two) " | "
+                                         (apply-mask @bit-three @sub-three) " | "
+                                         (+ 1 (apply-mask @bit-four  @sub-four))) " " ))
+            spans '()]
+       (if (empty? bits)
+         spans
+         (if (= "|" (first bits))
+           (recur bit-i (rest bits) (conj spans [:span.divider " " (first bits) " "]))
+           (cond (< (host-bits @sub-one @sub-two @sub-three @sub-four) bit-i)
+                 (recur (inc bit-i) (rest bits) (conj spans [:span.network " " (first bits) " "]))
+                 :else (recur (inc bit-i) (rest bits) (conj spans [:span.host " " (first bits) " "]))))))
+     " --- " (apply-mask->decimal @bit-one @sub-one)
+     "." (apply-mask->decimal @bit-two @sub-two)
+     "." (apply-mask->decimal @bit-three @sub-three)
+     "." (+ 1 (apply-mask->decimal @bit-four @sub-four))]))
+
+(defn network-address []
+  (fn []
+    [:p.mono "Network Address:::"
+     (loop [bit-i 1 bits (reverse (str/split (str (apply-mask @bit-one @sub-one) " | "
+                                         (apply-mask @bit-two @sub-two) " | "
+                                         (apply-mask @bit-three @sub-three) " | "
+                                         (apply-mask @bit-four  @sub-four)) " " ))
+            spans '()]
+       (if (empty? bits)
+         spans
+         (if (= "|" (first bits))
+           (recur bit-i (rest bits) (conj spans [:span.divider " " (first bits) " "]))
+           (cond (< (host-bits @sub-one @sub-two @sub-three @sub-four) bit-i)
+                 (recur (inc bit-i) (rest bits) (conj spans [:span.network " " (first bits) " "]))
+                 :else (recur (inc bit-i) (rest bits) (conj spans [:span.host " " (first bits) " "]))))))
+     " --- " (apply-mask->decimal @bit-one @sub-one)
+     "." (apply-mask->decimal @bit-two @sub-two)
+     "." (apply-mask->decimal @bit-three @sub-three)
+     "." (apply-mask->decimal @bit-four @sub-four)]))
 
 (defn subnet-mask []
   (fn []
@@ -268,10 +337,13 @@ each octet"
         (calc-bits @bit-one) " | "
         (calc-bits @bit-two) " | "
         (calc-bits @bit-three) " | "
-        (calc-bits @bit-four) " --- " ]
+        (calc-bits @bit-four) " --- "
+        @bit-one "." @bit-two "." @bit-three "." @bit-four]
        [subnet-mask]
-       [subnet]
-       [host]]))
+       [network-address]
+       [first-host]
+       [last-host]
+       [broadcast]]))
 
   
 
