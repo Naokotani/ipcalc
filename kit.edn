@@ -1,0 +1,8 @@
+{:full-name "kit/ipcalc"
+ :ns-name   "kit.ipcalc"
+ :sanitized "kit/ipcalc"
+ :name      "ipcalc"
+ :modules   {:root         "modules"
+             :repositories [{:url  "https://github.com/kit-clj/modules.git"
+                             :tag  "master"
+                             :name "kit-modules"}]}}

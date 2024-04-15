@@ -1,0 +1,12 @@
+{:nrepl {:port 7002}
+ :source-paths ["src/cljs"]
+ :dependencies [[binaryage/devtools "1.0.3"]
+                [nrepl "0.8.3"]
+                [cider/cider-nrepl "0.30.0"]
+                [cljs-ajax "0.8.4"] [reagent "1.1.0"]]
+ :builds       {:app {:target     :browser
+                      :output-dir "target/classes/cljsbuild/public/js"
+                      :asset-path "/js"
+                      :modules    {:app {:entries [kit.ipcalc.core]
+                                         :init-fn kit.ipcalc.core/init!}}
+                      :devtools   {:after-load kit.ipcalc.core/mount-root}}}}

@@ -1,0 +1,578 @@
+@import url('https://fonts.googleapis.com/css?family=Libre+Baskerville:400&display=swap');
+@import url('https://fonts.googleapis.com/css?family=Source+Sans+Pro:400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap')
+
+:root {
+  /*Styles*/
+  --line: solid 2px var(--lineColor);
+  --headerHeight: 5rem;
+  --containerPadding: 10%;
+
+  /*Elevations*/
+  --boxShadow: 0 2px 18px rgb(34 34 34 / 20%);
+  --boxShadowHover: 3px 6px 23px rgb(40 40 40 / 20%);
+  --cardTransition: box-shadow 200ms;
+
+  /* Fonts */
+  --headingFont: 'Source Sans Pro', sans-serif;
+  --bodyFont: 'Libre Baskerville', serif;
+  --baseFontSize: 130%;
+  --h1: 3.052rem;
+  --h2: 2.441rem;
+  --h3: 1.953rem;
+  --h4: 1.563rem;
+  --h5: 1.25rem;
+	--smallText: 0.8rem;
+
+  --cardWidth: 20rem;
+  --cardGapHorz: 3rem;
+  --cardGapVert: 3rem;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: inherit;
+}
+
+/* Color Themes */
+
+.dark {
+  /*dark mode pallette*/
+  --white: #fefefe;
+  --lightGrey: #bfbfbf;
+  --grey: #404040;
+  --darkGrey: #2b2b2b;
+  --black: #141414;
+  --blacker: #101010;
+	--darkRed: #dd0000;
+	--red: #ff0000;
+	--purple: #230631;
+  --bluePurple: #060630;
+  --deepPurple: #140630;
+	--lightPink: #E8DEFC;
+
+  /*Color intentions*/
+  --background: var(--black);
+  --textColor: var(--white);
+  --lineColor: var(--purple);
+  --headerText: var(--white);
+  --cardBg: var(--darkGrey);
+  --cardText: var(--white);
+	--anchorColor: var(--darkRed);
+	--navColor: var(--deepPurple);
+	--navText: var(--lightPink);
+	--navHover: var(--white);
+	--headerColor: var(--deepPurple);
+	--codeBlocks: var(--purple);
+	--code: var(--lightGrey);
+  --borderColor: var(--purple);
+	--linkColor: var(--lightPink);
+	--linkHover: var(--white);
+  --footerColor: var(--deepPurple);
+}
+
+.light {
+    /*light mode pallette*/
+    --white: #fefefe;
+    --lightGrey: #bfbfbf;
+    --grey: #404040;
+    --darkGrey: #2b2b2b;
+    --black: #141414;
+    --blacker: #000000;
+	  --darkRed: #dd0000;
+	  --red: #ff0000;
+    --lightBlue: #addfff;
+    --darkBlue: #addfff;
+
+    /*Color intentions*/
+    --background: var(--white);
+    --textColor: var(--black);
+    --lineColor: var(--grey);
+    --headerText: var(--black);
+    --cardBg: var(--white);
+    --cardText: var(--black);
+	  --anchorColor: var(--darkRed);
+	  --navColor: var(--white);
+	  --navText: var(--darkGrey);
+	  --navHover: var(--blacker);
+	  --headerColor: var(--lightBlue);
+	  --codeBlocks: var(--purple);
+	  --code: var(--grey);
+    --borderColor: var(--lightGrey);
+	  --linkHover: var(--lightGrey);
+    --footerColor: var(--lightBlue);
+}
+
+/* Content Containers */
+
+html {
+  font-size: var(--baseFontSize);
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--background);
+  font-family: var(--bodyFont);
+  font-weight: 400;
+  line-height: 1.75;
+  color: var(--textColor);
+}
+
+#contentDiv {
+  margin: auto;
+  max-width: 80vw;
+	min-height: calc(100vh - var(--headerHeight));
+	padding-bottom: 5rem;
+	padding: 1rem;
+  margin-top: var(--headerHeight);
+}
+
+#contentDiv img {
+	margin-left: auto;
+  margin-right: auto;
+  display: block;
+  overflow: auto;
+  max-width: 90vw;
+}
+
+
+
+/* Text */
+
+p {margin-bottom: 1rem;}
+
+h1, h2, h3, h4, h5 {
+  margin: 3rem 0 1.38rem;
+  font-family: var(--headingFont);
+  font-weight: 400;
+  line-height: 1.3;
+}
+
+h1 {font-size: var(--h2)}
+h2 {font-size: var(--h3)}
+h3 {font-size: var(--h4);}
+h4 {font-size: var(--h5);}
+h5 {font-size: var(--h5);}
+.h3 {font-size: var(--h3);}
+.h4 {font-size: var(--h4);}
+.h5 {font-size: var(--h5);}
+
+small, .text_small {font-size: var(--smallText);}
+
+h1.mobile-h1 {
+	font-size: var(--h3);
+	padding: 1rem 1rem 0 1rem;
+}
+
+a {
+	text-decoration: none;
+	color: var(--linkColor);
+}
+
+p a {
+	color: var(--anchorColor);
+}
+
+ a.anchor {
+  color: var(--anchorColor);
+}
+
+/* Header */
+header h2 {
+  line-height: var(--headerHeight);
+  margin: 0;
+  font-size: var(--h3);
+}
+
+button#theme-toggle {
+  background: none;
+  border: none;
+  color: var(--textColor);
+}
+
+#bulb {
+  display: none;
+}
+
+#moon {
+  display: none;
+}
+
+header {
+  box-shadow: var(--boxShadow);
+}
+
+header.mobile {
+  position: fixed;
+  top: 0;
+  left: 0;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  width: 100vw;
+  line-height: var(--headerHeight);
+}
+
+header.mobile nav {
+  display: flex;
+  justify-content: space-between;
+}
+
+div.mobile-social {
+  position: fixed;
+  top: var(--headerHeight);
+  background: var(--cardBg);
+  right: 0;
+  padding-right: 1rem;
+  padding-left: 1rem;
+  height: 6rem;
+  display: none;
+  display: grid;
+}
+
+div.mobile-social a {
+  line-height: 2rem;
+  color: var(--textColor);
+}
+
+header {
+	background-color: var(--headerColor);
+}
+
+header.desktop {
+	position: absolute;
+	width: 100vw;
+	top: 0;
+	left: 0;
+	right: 0;
+	z-index: 10;
+	height: var(--headerHeight);
+	display: none;
+	justify-content: space-between;
+}
+
+header a {
+	--anchorText: var(--white);
+	font-size: var(--h4);
+	line-height: var(--headerHeight);
+	margin: 0;
+	color: var(--anchorText);
+}
+
+header button {
+  cursor: pointer;
+	--anchorText: var(--white);
+	font-size: var(--h4);
+	line-height: var(--headerHeight);
+	margin: 0;
+	color: var(--anchorText);
+}
+
+header a {
+	--anchorText: var(--navText);
+	color: var(--anchorText);
+}
+
+header a:hover {
+	--anchorText: var(--navHover);
+	color: var(--anchorText);
+}
+
+/* Nav */
+header.desktop nav {
+  max-width: 60rem;
+  margin: auto;
+  display: flex;
+  justify-content: space-between;
+}
+
+nav a {
+	--anchorText: var(--navText);
+	color: var(--anchorText);
+	font-size: var(--h5);
+}
+
+nav a:hover {
+	--anchorText: var(--navHover);
+	color: var(--anchorText);
+}
+
+/* Misc. */
+
+.git-logo {
+	height: var(--h5);
+}
+
+.git-logo-light {
+	display: none;
+}
+
+
+small {
+	color: var(--code);
+}
+
+ul {
+	padding-left: 1rem;
+}
+
+li {
+	list-style: none;
+}
+
+.intro {
+	margin-bottom: 5rem;
+}
+
+div.summary {
+	display: none;
+}
+
+.social-links a+a {
+  padding-left: 0.5rem;
+}
+
+summary {
+	display: none;
+}
+
+.not-found {
+    padding-top: 3rem;
+    padding-left: 20%;
+}
+
+/* Code Blocks */
+code {
+	color: var(--code);
+}
+
+.org-src-container {
+	background-color: var(--codeBlocks);
+	padding: 3rem;
+	border-radius: 5px;
+	box-shadow: var(--level-4);
+	overflow: auto;
+}
+
+pre {
+  box-shadow: var(--boxShadow);
+  padding: 1rem;
+}
+
+.mono {
+  font-family: "Space Mono", monospace;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 1.25rem;
+}
+
+/* Cards */
+
+.card {
+  box-shadow: var(--boxShadow);
+	width: var(--cardWidth);
+  max-width: 90vw;
+	min-height: 20rem;
+	background-color: var(--cardBg);
+	border-radius: 5px;
+}
+
+.card a {
+  display: block;
+  min-height: 20rem;
+}
+
+div.card:hover {
+  box-shadow: var(--boxShadowHover);
+}
+
+.card img {
+	width: var(--cardWidth);
+  max-width: 90vw;
+	max-height: 12rem;
+	object-fit: cover;
+}
+
+.card h2 {
+	margin: 0;
+	font-size: var(--h5);
+}
+
+div.card-content {
+	padding: 1rem;
+}
+
+div.card-content {
+	color: var(--cardText);
+}
+
+/* Crafter Ring */
+
+.ring-head {
+  margin-top: 1rem;
+}
+
+.ring-widget a + a {
+  padding-left: 4rem;
+  text-align: center;
+}
+
+.ring-about {
+  min-height: 8rem;
+  margin-bottom: 0;
+}
+
+.ring-desktop {
+  display: none;
+}
+
+.craftering {
+  padding: 1rem;
+	margin: auto;
+	text-align: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  max-width: 20rem;
+}
+
+/* Footer */
+
+.network {
+  color: green;
+}
+
+.host {
+  color: blue;
+}
+
+footer {
+  display: none;
+}
+
+footer {
+  width: 100vw;
+  background: var(--footerColor);
+  height: 5rem;
+}
+
+footer div {
+  width: 10rem;
+  margin: auto;
+}
+
+footer p {
+  margin: 0;
+  padding-top: 1rem;
+}
+
+footer a {
+  color: var(--textColor);
+}
+
+footer a + a {
+  padding-left: 1.8rem;
+}
+
+@media (min-width: 1600px) {
+	.cards {
+    margin: auto;
+    width: calc((var(--cardWidth) * 2) + var(--cardGap));
+		--gridCols: 2;
+		display: grid;
+		grid-template-columns: repeat(var(--gridCols), 1fr);
+    gap: var(--cardGapVert) var(--cardGapHorz);
+	}
+}
+
+@media (min-width: 1300px) {
+
+  footer {
+    display: block;
+  }
+
+  h1 {font-size: var(--h1)}
+
+  h2 {font-size: var(--h2)}
+
+  h3 {font-size: var(--h3);}
+
+  h4 {font-size: var(--h4);}
+
+  h5 {font-size: var(--h5);}
+
+	header.desktop {
+		display: block;
+	}
+
+  header.mobile {
+    display: none;
+  }
+
+  #mobile-social {
+    display: none;
+  }
+
+	nav {
+		display: block;
+	}
+
+	#contentDiv {
+		margin-top: var(--headerHeight);
+		z-index: -5;
+		border-radius: 2px;
+		min-height: calc(100vh - var(--headerHeight));
+		padding-bottom: 5rem;
+	}
+
+  #web-ring {
+    padding-bottom: 3rem;
+  }
+
+  .ring-desktop {
+    display: block;
+  }
+
+  #web-ring h2 {
+    text-align: center;
+    border-bottom: var(--line);
+    margin: 0;
+    margin-bottom: 1rem;
+  }
+
+  .ring-container {
+    margin: auto;
+    max-width: 40rem;
+  }
+
+  .ring-widget {
+    display: flex;
+    justify-content: space-between;
+    alight-items: center;
+    height: var(--h3);
+    line-height: var(--h3);
+  }
+
+  .ring-widget button {
+    background: var(--buttonColor);
+    box-shadow: var(--cardShadow:);
+    color: var(--linkColor);
+    border: none;
+    cursor: pointer;
+  }
+
+	.cards-grid {
+		display: flex;
+		justify-content: center;
+	}
+
+	.card img {
+		max-width: 20rem;
+	}
+
+	h1.mobile-h1 {
+		display: none;
+	}
+		
+}
+
