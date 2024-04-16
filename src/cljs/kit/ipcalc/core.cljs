@@ -40,11 +40,6 @@ the bits. The octets must be strings of 8 bits seperated by spaces."
         sub (str/split (calc-bits sub-octet) " ")]
     (str/trim (apply str (map #(if (and (= %1 "1") (= %2 "1")) "1 " "0 ") ip sub)))))
 
-(comment
-  (str/trim "  a   ")
-  (apply-mask "1 1 1 1 1 1 0 1"
-              "1 1 1 1 1 1 0 0"))
-
 (defn bits->decimal ([bits]
                      "Takes a string representing bits and returns a decimal
 represetation of the same value."
@@ -144,7 +139,6 @@ each octet"
        [:p "Second octet: " [atom-input bit-two]]
        [:p "Third octet: " [atom-input bit-three]]
        [:p "Fourth octet: " [atom-input bit-four]]]))
-
 
 (defn broadcast []
   (fn []
