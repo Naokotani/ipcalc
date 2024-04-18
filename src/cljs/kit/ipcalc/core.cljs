@@ -115,10 +115,10 @@ and returns a string of 1s and 0s seperated by spaces."
         (class-c subnet))))
 
 ;; IP address atoms
-(def bit-one (r/atom "0"))
-(def bit-two (r/atom "0"))
-(def bit-three (r/atom "0"))
-(def bit-four (r/atom "0"))
+(def byte-one (r/atom "0"))
+(def byte-two (r/atom "0"))
+(def byte-three (r/atom "0"))
+(def byte-four (r/atom "0"))
 
 ;; Subnets input atoms
 (def sub-one (r/atom "0"))
@@ -189,16 +189,16 @@ each octet"
                           (str
                            (calc-bits
                             (last-subnet @sub-one
-                                         (apply-mask->decimal @bit-one @sub-one))) " | "
+                                         (apply-mask->decimal @byte-one @sub-one))) " | "
                            (calc-bits
                             (last-subnet @sub-two
-                                         (apply-mask->decimal @bit-two @sub-two))) " | "
+                                         (apply-mask->decimal @byte-two @sub-two))) " | "
                            (calc-bits
                             (last-subnet @sub-three
-                                         (apply-mask->decimal @bit-three @sub-three))) " | "
+                                         (apply-mask->decimal @byte-three @sub-three))) " | "
                            (calc-bits
                             (last-subnet @sub-four
-                                         (apply-mask->decimal @bit-four @sub-four))) " "))
+                                         (apply-mask->decimal @byte-four @sub-four))) " "))
             spans '()]
        (if (empty? bits)
          spans
@@ -212,10 +212,10 @@ each octet"
                  :else (recur (inc bit-i) (rest bits)
                               (conj spans 
                                     [:span {:key bit-i :class "host"} " " (first bits) " "]))))))
-     " --- " (last-subnet @sub-one (apply-mask->decimal @bit-one @sub-one))
-     "." (last-subnet @sub-two (apply-mask->decimal @bit-two @sub-two))
-     "." (last-subnet @sub-three (apply-mask->decimal @bit-three @sub-three))
-     "." (last-subnet @sub-four (apply-mask->decimal @bit-four @sub-four))]))
+     " --- " (last-subnet @sub-one (apply-mask->decimal @byte-one @sub-one))
+     "." (last-subnet @sub-two (apply-mask->decimal @byte-two @sub-two))
+     "." (last-subnet @sub-three (apply-mask->decimal @byte-three @sub-three))
+     "." (last-subnet @sub-four (apply-mask->decimal @byte-four @sub-four))]))
 
 
 (defn last-host []
@@ -225,14 +225,14 @@ each octet"
      (loop [bit-i 1 bits (bin->vec
                           (str
                            (calc-bits
-                            (last-subnet @sub-one (apply-mask->decimal @bit-one @sub-one))) " | "
+                            (last-subnet @sub-one (apply-mask->decimal @byte-one @sub-one))) " | "
                            (calc-bits
-                            (last-subnet @sub-two (apply-mask->decimal @bit-two @sub-two))) " | "
+                            (last-subnet @sub-two (apply-mask->decimal @byte-two @sub-two))) " | "
                            (calc-bits
-                            (last-subnet @sub-three (apply-mask->decimal @bit-three @sub-three))) " | "
+                            (last-subnet @sub-three (apply-mask->decimal @byte-three @sub-three))) " | "
                            (calc-bits (- (js/parseInt
                                           (last-subnet @sub-four
-                                                       (apply-mask->decimal @bit-four @sub-four))) 1))))
+                                                       (apply-mask->decimal @byte-four @sub-four))) 1))))
             spans '()]
        (if (empty? bits)
          spans
@@ -245,19 +245,19 @@ each octet"
                                                       [:span {:key bit-i :class "network"}  " " (first bits) " "]))
                  :else (recur (inc bit-i) (rest bits) (conj spans 
                                                             [:span {:key bit-i :class "host"} " " (first bits) " "]))))))
-     " --- " (last-subnet @sub-one (apply-mask->decimal @bit-one @sub-one))
-     "." (last-subnet @sub-two (apply-mask->decimal @bit-two @sub-two))
-     "." (last-subnet @sub-three (apply-mask->decimal @bit-three @sub-three))
-     "." (- (js/parseInt (last-subnet @sub-four (apply-mask->decimal @bit-four @sub-four))) 1)]))
+     " --- " (last-subnet @sub-one (apply-mask->decimal @byte-one @sub-one))
+     "." (last-subnet @sub-two (apply-mask->decimal @byte-two @sub-two))
+     "." (last-subnet @sub-three (apply-mask->decimal @byte-three @sub-three))
+     "." (- (js/parseInt (last-subnet @sub-four (apply-mask->decimal @byte-four @sub-four))) 1)]))
 
 (defn first-host []
   "Component to display the first host address in a sub net in both binary and decimal formats"
   (fn []
     [:p.mono "First host::::::::"
-     (loop [bit-i 1 bits (bin->vec (str (calc-bits (apply-mask->decimal @bit-one @sub-one)) " | "
-                                         (calc-bits (apply-mask->decimal @bit-two @sub-two)) " | "
-                                         (calc-bits (apply-mask->decimal @bit-three @sub-three)) " | "
-                                         (calc-bits (+ 1(apply-mask->decimal @bit-four @sub-four)))))
+     (loop [bit-i 1 bits (bin->vec (str (calc-bits (apply-mask->decimal @byte-one @sub-one)) " | "
+                                         (calc-bits (apply-mask->decimal @byte-two @sub-two)) " | "
+                                         (calc-bits (apply-mask->decimal @byte-three @sub-three)) " | "
+                                         (calc-bits (+ 1(apply-mask->decimal @byte-four @sub-four)))))
             spans '()]
        (if (empty? bits)
          spans
@@ -270,20 +270,20 @@ each octet"
                                                       [:span {:key bit-i :class "network"} " " (first bits) " "]))
                  :else (recur (inc bit-i) (rest bits) (conj spans 
                                                             [:span {:key bit-i :class "host"} " " (first bits) " "]))))))
-     " --- " (apply-mask->decimal @bit-one @sub-one)
-     "." (apply-mask->decimal @bit-two @sub-two)
-     "." (apply-mask->decimal @bit-three @sub-three)
-     "." (+ 1 (apply-mask->decimal @bit-four @sub-four))]))
+     " --- " (apply-mask->decimal @byte-one @sub-one)
+     "." (apply-mask->decimal @byte-two @sub-two)
+     "." (apply-mask->decimal @byte-three @sub-three)
+     "." (+ 1 (apply-mask->decimal @byte-four @sub-four))]))
 
 
 (defn network-address []
   "Component to dispaly the network address of a sub net in both decimal and binary"
   (fn []
     [:p.mono "Network Address:::"
-     (loop [bit-i 1 bits (bin->vec (str (apply-mask @bit-one @sub-one) " | "
-                                         (apply-mask @bit-two @sub-two) " | "
-                                         (apply-mask @bit-three @sub-three) " | "
-                                         (apply-mask @bit-four  @sub-four)))
+     (loop [bit-i 1 bits (bin->vec (str (apply-mask @byte-one @sub-one) " | "
+                                         (apply-mask @byte-two @sub-two) " | "
+                                         (apply-mask @byte-three @sub-three) " | "
+                                         (apply-mask @byte-four  @sub-four)))
             spans '()]
        (if (empty? bits)
          spans
@@ -296,10 +296,10 @@ each octet"
                                                       [:span {:key bit-i :class "network"} " " (first bits) " "]))
                  :else (recur (inc bit-i) (rest bits) (conj spans 
                                                             [:span {:key bit-i :class "host"} " " (first bits) " "]))))))
-     " --- " (apply-mask->decimal @bit-one @sub-one)
-     "." (apply-mask->decimal @bit-two @sub-two)
-     "." (apply-mask->decimal @bit-three @sub-three)
-     "." (apply-mask->decimal @bit-four @sub-four)]))
+     " --- " (apply-mask->decimal @byte-one @sub-one)
+     "." (apply-mask->decimal @byte-two @sub-two)
+     "." (apply-mask->decimal @byte-three @sub-three)
+     "." (apply-mask->decimal @byte-four @sub-four)]))
 
 (defn subnet-mask []
   "Component to display a subnet mask in both binary and decimal formats."
@@ -331,7 +331,7 @@ each octet"
     (fn []
       [:div
        [:form.ip-input
-       [ip-address bit-one bit-two bit-three bit-four]
+       [ip-address byte-one byte-two byte-three byte-four]
         [:div.subnet
        (if (= @toggle-cidr "CIDR ")
          [ip-address sub-one sub-two sub-three sub-four]
@@ -339,12 +339,12 @@ each octet"
        [toggle-cidr-button]]]
        [:p.mono
         "IP address::::::::  "
-        (calc-bits @bit-one) " | "
-        (calc-bits @bit-two) " | "
-        (calc-bits @bit-three) " | "
-        (calc-bits @bit-four) " --- "
-        @bit-one "." @bit-two "." @bit-three "." @bit-four
-        [ip-class {:one @bit-one :two @bit-two :three @bit-three :four @bit-four}
+        (calc-bits @byte-one) " | "
+        (calc-bits @byte-two) " | "
+        (calc-bits @byte-three) " | "
+        (calc-bits @byte-four) " --- "
+        @byte-one "." @byte-two "." @byte-three "." @byte-four
+        [ip-class {:one @byte-one :two @byte-two :three @byte-three :four @byte-four}
          {:one @sub-one :two @sub-two :three @sub-three :four @sub-four}]]
        [subnet-mask]
        [network-address]
