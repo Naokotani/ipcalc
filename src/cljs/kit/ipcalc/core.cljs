@@ -56,6 +56,11 @@ represetation of the same value."
   "turns a binary IP into a reversed order array array."
   (reverse (str/split string " ")))
 
+(defn vec->octet [bit-vec drop-num]
+  "takes a vector of 8 bits represented as a 1 or 0 followed by a space
+and returns a string of 1s and 0s seperated by spaces."
+  (apply str (take 8 (drop drop-num bit-vec))))
+
 (defn host-bits [sub-one sub-two sub-three sub-four]
   (let [mask (str
               (calc-bits sub-one) " "
@@ -68,12 +73,46 @@ represetation of the same value."
   "Returns decimal representation of applied subnet mask"
   (bits->decimal (apply-mask ip-octet sub-octet)))
 
-
 (defn last-subnet [mask octet]
   "Takes an octet string and returns a broadcast address"
   (let [host-count (- 255  (js/parseInt mask))
         octet (js/parseInt octet)]
     (if (> (+ host-count octet) 255) "255" (str (+ host-count octet)))))
+
+(defn class-a [subnet]
+  "Test for class A subnet mask."
+  (if (and (= (subnet :one) 255)
+           (< (subnet :two) 255)
+           (< (subnet :three) 255)
+           (< (subnet :four) 255))
+  (str " --- Class A")))
+   
+(defn class-b [subnet]
+  "Test for class B subnet mask."
+  (if (and (= (subnet :one) 255)
+           (= (subnet :two) 255)
+           (< (subnet :three) 255)
+           (< (subnet :four) 255))
+  (str " --- Class B")))
+
+(defn class-c [subnet]
+  "Test class C subnet mask"
+  (if (and (= (subnet :one) 255)
+           (= (subnet :two) 255)
+           (= (subnet :three) 255)
+           (< (subnet :four) 255))
+  (str " --- Class C")))
+
+(defn ip-class [ip subnet]
+  "Test ip address for IP class"
+  (if (and (> (ip :two) 0) (> (ip :three) 0) (> (ip :four) 0)
+           (<= (ip :two) 255) (<= (ip :three) 255) (<= (ip :four) 255))
+  (cond (and (> (ip :one) 0) (<= (ip :one) 127))
+        (class-a subnet)
+        (and (>= (ip :one) 128) (<= (ip :one) 191))
+        (class-b subnet)
+        (and (>= (ip :one) 192) (<= (ip :one) 224))
+        (class-c subnet))))
 
 ;; IP address atoms
 (def bit-one (r/atom "0"))
@@ -104,13 +143,9 @@ represetation of the same value."
 (defn toggle-cidr-button []
   "Button to toggle subnet input type."
   [:div
-   [:input {:type "button" :value (str @toggle-cidr " notation")
+   [:input.cidr {:type "button" :value (str @toggle-cidr " notation")
             :on-click #(reset-subnet)}]])
 
-(defn vec->octet [bit-vec drop-num]
-  "takes a vector of 8 bits represented as a 1 or 0 followed by a space
-and returns a string of 1s and 0s seperated by spaces."
-  (apply str (take 8 (drop drop-num bit-vec))))
 
 (defn cidr->subnet [cidr]
   "Takse a CIDR notation for a subnet mask and sets the decimal version.
@@ -126,13 +161,13 @@ I.E.: 255 255 255 0"
 (defn input-cidr []
   "Input for cider notaiton subnet that sets the decimal version of
 each octet"
-  [:h2 "Input CIDR style subnet affix /" ]
-  [:input {:type "text"
-           :value @cidr
-           :on-change (fn [e]
-                        (reset! cidr (-> e .-target .-value))
-                        (cidr->subnet (js/parseInt @cidr)))}])
-
+  [:div
+   [:span "/ "]
+   [:input {:type "text"
+            :value @cidr
+            :on-change (fn [e]
+                         (reset! cidr (-> e .-target .-value))
+                         (cidr->subnet (js/parseInt @cidr)))}]])
 
 (defn ip-address [bit-one bit-two bit-three bit-four]
   "Componenet for the IP inputs including decimal notation sub net"
@@ -295,27 +330,27 @@ each octet"
   "Main component. Entry point for the IPv4 caclculator."
     (fn []
       [:div
-       [:h2 "IP Addesss" ]
+       [:form.ip-input
        [ip-address bit-one bit-two bit-three bit-four]
-       [:h2 "Subnet Mask"]
-       [toggle-cidr-button]
+        [:div.subnet
        (if (= @toggle-cidr "CIDR ")
          [ip-address sub-one sub-two sub-three sub-four]
          [input-cidr])
+       [toggle-cidr-button]]]
        [:p.mono
         "IP address::::::::  "
         (calc-bits @bit-one) " | "
         (calc-bits @bit-two) " | "
         (calc-bits @bit-three) " | "
         (calc-bits @bit-four) " --- "
-        @bit-one "." @bit-two "." @bit-three "." @bit-four]
+        @bit-one "." @bit-two "." @bit-three "." @bit-four
+        [ip-class {:one @bit-one :two @bit-two :three @bit-three :four @bit-four}
+         {:one @sub-one :two @sub-two :three @sub-three :four @sub-four}]]
        [subnet-mask]
        [network-address]
        [first-host]
        [last-host]
        [broadcast]]))
-
-  
 
 ;; -------------------------
 ;; Initialize app

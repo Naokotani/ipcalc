@@ -450,6 +450,20 @@ div.card-content {
   width: 3rem;
 }
 
+input.cidr {
+  width: 3rem;
+}
+
+form.ip-input {
+	display: flex;
+  justify-items: space-around;
+
+}
+
+div.subnet {
+  padding-left: 1rem;
+}
+
 footer {
   display: none;
 }
