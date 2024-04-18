@@ -446,6 +446,10 @@ div.card-content {
   color: blue;
 }
 
+.ip-input input {
+  width: 3rem;
+}
+
 footer {
   display: none;
 }
