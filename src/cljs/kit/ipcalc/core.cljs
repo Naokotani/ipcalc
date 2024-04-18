@@ -31,7 +31,9 @@ a string representing the binary reprsentation."
   "Basic string input that updates an atom"
   [:input {:type "text"
            :value @value
-           :on-change #(reset! value (-> % .-target .-value))}])
+           :on-change #((if (and (>= (-> % .-target .-value) 0)
+                                 (<= (-> % .-target .-value) 255))
+                          (reset! value (-> % .-target .-value))))}])
 
 (defn apply-mask [ip-octet sub-octet]
   "Applies a subnet mask to an IP address by doing a bitwise comparison of
@@ -101,7 +103,6 @@ and returns a string of 1s and 0s seperated by spaces."
            (< (subnet :three) 255)
            (< (subnet :four) 255))
   (str " --- Class A" (class-a-type ip))))
-
    
 (defn class-b [ip subnet]
   "Test for class B subnet mask."
@@ -164,12 +165,12 @@ and returns a string of 1s and 0s seperated by spaces."
 
 ;; CIDR atoms
 (def cidr (r/atom "0"))
-(def toggle-cidr (r/atom "Octet "))
+(def toggle-cidr (r/atom "Toggle Input: Decimal"))
 
 (defn reset-subnet []
   "Resets all subnet values to 0 and toggles the subnet input type."
-  (reset! toggle-cidr (if (= @toggle-cidr "CIDR ")
-                        "Octet " "CIDR "))
+  (reset! toggle-cidr (if (= @toggle-cidr "Toggle Input: Decimal")
+                        "Toggle Input: CIDR" "Toggle Input: Decimal"))
   (reset! cidr "0")
   (reset! sub-one "0")
   (reset! sub-two "0")
@@ -179,9 +180,8 @@ and returns a string of 1s and 0s seperated by spaces."
 (defn toggle-cidr-button []
   "Button to toggle subnet input type."
   [:div
-   [:input.cidr {:type "button" :value (str @toggle-cidr " notation")
+   [:input.cidr {:type "button" :value @toggle-cidr
             :on-click #(reset-subnet)}]])
-
 
 (defn cidr->subnet [cidr]
   "Takse a CIDR notation for a subnet mask and sets the decimal version.
@@ -202,7 +202,8 @@ each octet"
    [:input {:type "text"
             :value @cidr
             :on-change (fn [e]
-                         (reset! cidr (-> e .-target .-value))
+                         (if (and (>= (-> e .-target .-value) 0 ) (<= (-> e .-target .-value) 30))
+                           (reset! cidr (-> e .-target .-value)))
                          (cidr->subnet (js/parseInt @cidr)))}]])
 
 (defn ip-address [bit-one bit-two bit-three bit-four]
@@ -248,7 +249,7 @@ each octet"
                  :else (recur (inc bit-i) (rest bits)
                               (conj spans 
                                     [:span {:key bit-i :class "host"} " " (first bits) " "]))))))
-     " --- " (last-subnet @sub-one (apply-mask->decimal @byte-one @sub-one))
+     " : " (last-subnet @sub-one (apply-mask->decimal @byte-one @sub-one))
      "." (last-subnet @sub-two (apply-mask->decimal @byte-two @sub-two))
      "." (last-subnet @sub-three (apply-mask->decimal @byte-three @sub-three))
      "." (last-subnet @sub-four (apply-mask->decimal @byte-four @sub-four))]))
@@ -281,7 +282,7 @@ each octet"
                                                       [:span {:key bit-i :class "network"}  " " (first bits) " "]))
                  :else (recur (inc bit-i) (rest bits) (conj spans 
                                                             [:span {:key bit-i :class "host"} " " (first bits) " "]))))))
-     " --- " (last-subnet @sub-one (apply-mask->decimal @byte-one @sub-one))
+     " : " (last-subnet @sub-one (apply-mask->decimal @byte-one @sub-one))
      "." (last-subnet @sub-two (apply-mask->decimal @byte-two @sub-two))
      "." (last-subnet @sub-three (apply-mask->decimal @byte-three @sub-three))
      "." (- (js/parseInt (last-subnet @sub-four (apply-mask->decimal @byte-four @sub-four))) 1)]))
@@ -306,7 +307,7 @@ each octet"
                                                       [:span {:key bit-i :class "network"} " " (first bits) " "]))
                  :else (recur (inc bit-i) (rest bits) (conj spans 
                                                             [:span {:key bit-i :class "host"} " " (first bits) " "]))))))
-     " --- " (apply-mask->decimal @byte-one @sub-one)
+     " : " (apply-mask->decimal @byte-one @sub-one)
      "." (apply-mask->decimal @byte-two @sub-two)
      "." (apply-mask->decimal @byte-three @sub-three)
      "." (+ 1 (apply-mask->decimal @byte-four @sub-four))]))
@@ -332,7 +333,7 @@ each octet"
                                                       [:span {:key bit-i :class "network"} " " (first bits) " "]))
                  :else (recur (inc bit-i) (rest bits) (conj spans 
                                                             [:span {:key bit-i :class "host"} " " (first bits) " "]))))))
-     " --- " (apply-mask->decimal @byte-one @sub-one)
+     " : " (apply-mask->decimal @byte-one @sub-one)
      "." (apply-mask->decimal @byte-two @sub-two)
      "." (apply-mask->decimal @byte-three @sub-three)
      "." (apply-mask->decimal @byte-four @sub-four)]))
@@ -358,7 +359,7 @@ each octet"
                              [:span {:key bit-i :class "network"} " " (first bits) " "]))
                  :else (recur (inc bit-i) (rest bits)
                              (conj spans [:span {:key bit-i :class "host"} " " (first bits) " "]))))))
-     " --- "   @sub-one "." @sub-two "." @sub-three "." @sub-four " --- 2 ^ "
+     " : "   @sub-one "." @sub-two "." @sub-three "." @sub-four " --- 2 ^ "
      (host-bits @sub-one @sub-two @sub-three @sub-four) " - 2 is "
      (- (exp 2 (host-bits @sub-one @sub-two @sub-three @sub-four)) 2) " hosts. "]))
 
@@ -367,18 +368,21 @@ each octet"
     (fn []
       [:div
        [:form.ip-input
+       [:label "IP Address"]
+       [:label.subnet "Subnet Mask"]
        [ip-address byte-one byte-two byte-three byte-four]
         [:div.subnet
-       (if (= @toggle-cidr "CIDR ")
+       (if (= @toggle-cidr "Toggle Input: CIDR")
          [ip-address sub-one sub-two sub-three sub-four]
          [input-cidr])
        [toggle-cidr-button]]]
+       [:p.mono [:span.network "Network bits |"][:span.host " Host Bits"]]
        [:p.mono
         "IP address::::::::  "
         (calc-bits @byte-one) " | "
         (calc-bits @byte-two) " | "
         (calc-bits @byte-three) " | "
-        (calc-bits @byte-four) " --- "
+        (calc-bits @byte-four) " : "
         @byte-one "." @byte-two "." @byte-three "." @byte-four
         [ip-class
          {:one (js/parseInt @byte-one)

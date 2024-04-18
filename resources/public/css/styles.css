@@ -107,6 +107,31 @@
 /* Content Containers */
 
 html {
+  /*Styles*/
+  --line: solid 2px var(--lineColor);
+  --headerHeight: 5rem;
+  --containerPadding: 10%;
+
+  /*Elevations*/
+  --boxShadow: 0 2px 18px rgb(34 34 34 / 20%);
+  --boxShadowHover: 3px 6px 23px rgb(40 40 40 / 20%);
+  --cardTransition: box-shadow 200ms;
+
+  /* Fonts */
+  --headingFont: 'Source Sans Pro', sans-serif;
+  --bodyFont: 'Libre Baskerville', serif;
+  --baseFontSize: 100%;
+  --h1: 3.052rem;
+  --h2: 2.441rem;
+  --h3: 1.953rem;
+  --h4: 1.563rem;
+  --h5: 1.25rem;
+	--smallText: 0.8rem;
+
+  --cardWidth: 20rem;
+  --cardGapHorz: 3rem;
+  --cardGapVert: 3rem;
+
   font-size: var(--baseFontSize);
   box-sizing: border-box;
 }
@@ -136,8 +161,6 @@ body {
   max-width: 90vw;
 }
 
-
-
 /* Text */
 
 p {margin-bottom: 1rem;}
@@ -149,10 +172,10 @@ h1, h2, h3, h4, h5 {
   line-height: 1.3;
 }
 
-h1 {font-size: var(--h2)}
-h2 {font-size: var(--h3)}
-h3 {font-size: var(--h4);}
-h4 {font-size: var(--h5);}
+h1 {font-size: var(--h1)}
+h2 {font-size: var(--h2)}
+h3 {font-size: var(--h3);}
+h4 {font-size: var(--h4);}
 h5 {font-size: var(--h5);}
 .h3 {font-size: var(--h3);}
 .h4 {font-size: var(--h4);}
@@ -448,16 +471,44 @@ div.card-content {
 
 .ip-input input {
   width: 3rem;
+  border-radius: 3px;
 }
 
 input.cidr {
-  width: 3rem;
+  appearance: none;
+  background-color: #FAFBFC;
+  border: 1px solid rgba(27, 31, 35, 0.15);
+  border-radius: 6px;
+  box-shadow: rgba(27, 31, 35, 0.04) 0 1px 0, rgba(255, 255, 255, 0.25) 0 1px 0 inset;
+  box-sizing: border-box;
+  color: #24292E;
+  cursor: pointer;
+  display: inline-block;
+  font-family: "Space Mono", monospace;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 1rem;
+  width: 15rem;
+  padding: 6px 16px;
+  margin-top: 1rem;
+
+  margin-left: 0.80rem;
+}
+
+input.cidr {
+  background-color: #F3F4F6;
+  text-decoration: none;
+  transition-duration: 0.1s;
 }
 
 form.ip-input {
-	display: flex;
-  justify-items: space-around;
+	display: grid;
+  grid-template-columns: auto auto;
+  width: 33rem;
+}
 
+label.subnet {
+  padding-left: 1.75rem;
 }
 
 div.subnet {
@@ -491,106 +542,3 @@ footer a {
 footer a + a {
   padding-left: 1.8rem;
 }
-
-@media (min-width: 1600px) {
-	.cards {
-    margin: auto;
-    width: calc((var(--cardWidth) * 2) + var(--cardGap));
-		--gridCols: 2;
-		display: grid;
-		grid-template-columns: repeat(var(--gridCols), 1fr);
-    gap: var(--cardGapVert) var(--cardGapHorz);
-	}
-}
-
-@media (min-width: 1300px) {
-
-  footer {
-    display: block;
-  }
-
-  h1 {font-size: var(--h1)}
-
-  h2 {font-size: var(--h2)}
-
-  h3 {font-size: var(--h3);}
-
-  h4 {font-size: var(--h4);}
-
-  h5 {font-size: var(--h5);}
-
-	header.desktop {
-		display: block;
-	}
-
-  header.mobile {
-    display: none;
-  }
-
-  #mobile-social {
-    display: none;
-  }
-
-	nav {
-		display: block;
-	}
-
-	#contentDiv {
-		margin-top: var(--headerHeight);
-		z-index: -5;
-		border-radius: 2px;
-		min-height: calc(100vh - var(--headerHeight));
-		padding-bottom: 5rem;
-	}
-
-  #web-ring {
-    padding-bottom: 3rem;
-  }
-
-  .ring-desktop {
-    display: block;
-  }
-
-  #web-ring h2 {
-    text-align: center;
-    border-bottom: var(--line);
-    margin: 0;
-    margin-bottom: 1rem;
-  }
-
-  .ring-container {
-    margin: auto;
-    max-width: 40rem;
-  }
-
-  .ring-widget {
-    display: flex;
-    justify-content: space-between;
-    alight-items: center;
-    height: var(--h3);
-    line-height: var(--h3);
-  }
-
-  .ring-widget button {
-    background: var(--buttonColor);
-    box-shadow: var(--cardShadow:);
-    color: var(--linkColor);
-    border: none;
-    cursor: pointer;
-  }
-
-	.cards-grid {
-		display: flex;
-		justify-content: center;
-	}
-
-	.card img {
-		max-width: 20rem;
-	}
-
-	h1.mobile-h1 {
-		display: none;
-	}
-		
-}
-
