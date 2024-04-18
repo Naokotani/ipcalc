@@ -79,15 +79,31 @@ and returns a string of 1s and 0s seperated by spaces."
         octet (js/parseInt octet)]
     (if (> (+ host-count octet) 255) "255" (str (+ host-count octet)))))
 
-(defn class-a [subnet]
+(defn class-a-type [ip]
+  (cond (= 255 (ip :two) (ip :three) (ip :four)) (str " broadcast")
+        (= 0 (ip :two) (ip :three) (ip :four)) (str " network address")
+        :else (str " host address")))
+
+(defn class-b-type [ip]
+  (cond (= 255 (ip :three) (ip :four)) (str " broadcast")
+        (= 0 (ip :three) (ip :four)) (str " network address")
+        :else (str " host address")))
+
+(defn class-c-type [ip]
+  (cond (= 255 (ip :four)) (str " broadcast")
+        (= 0 (ip :four)) (str " network address")
+        :else (str " host address")))
+
+(defn class-a [ip subnet]
   "Test for class A subnet mask."
   (if (and (= (subnet :one) 255)
            (< (subnet :two) 255)
            (< (subnet :three) 255)
            (< (subnet :four) 255))
-  (str " --- Class A")))
+  (str " --- Class A" (class-a-type ip))))
+
    
-(defn class-b [subnet]
+(defn class-b [ip subnet]
   "Test for class B subnet mask."
   (if (and (= (subnet :one) 255)
            (= (subnet :two) 255)
@@ -95,7 +111,7 @@ and returns a string of 1s and 0s seperated by spaces."
            (< (subnet :four) 255))
   (str " --- Class B")))
 
-(defn class-c [subnet]
+(defn class-c [ip subnet]
   "Test class C subnet mask"
   (if (and (= (subnet :one) 255)
            (= (subnet :two) 255)
@@ -103,16 +119,36 @@ and returns a string of 1s and 0s seperated by spaces."
            (< (subnet :four) 255))
   (str " --- Class C")))
 
+(defn class-d [subnet]
+  "Test class D subnet mask"
+  (if (and (= (subnet :one) 240)
+           (= (subnet :two) 0)
+           (= (subnet :three) 0)
+           (= (subnet :four) 0))
+  (str " --- Class D")))
+
+(defn class-e [subnet]
+  "Test class D subnet mask"
+  (if (and (= (subnet :one) 0)
+           (= (subnet :two) 0)
+           (= (subnet :three) 0)
+           (= (subnet :four) 0))
+  (str " --- Class E")))
+
 (defn ip-class [ip subnet]
   "Test ip address for IP class"
-  (if (and (> (ip :two) 0) (> (ip :three) 0) (> (ip :four) 0)
+  (if (and (>= (ip :two) 0) (>= (ip :three) 0) (>= (ip :four) 0)
            (<= (ip :two) 255) (<= (ip :three) 255) (<= (ip :four) 255))
-  (cond (and (> (ip :one) 0) (<= (ip :one) 127))
-        (class-a subnet)
+  (cond (and (>= (ip :one) 0) (<= (ip :one) 127))
+        (class-a ip subnet)
         (and (>= (ip :one) 128) (<= (ip :one) 191))
-        (class-b subnet)
+        (class-b ip subnet)
         (and (>= (ip :one) 192) (<= (ip :one) 224))
-        (class-c subnet))))
+        (class-c ip subnet)
+        (and (>= (ip :one) 224) (<= (ip :one) 239))
+        (class-d subnet)
+        (and (>= (ip :one) 240) (<= (ip :one) 255))
+        (class-e subnet))))
 
 ;; IP address atoms
 (def byte-one (r/atom "0"))
@@ -344,8 +380,15 @@ each octet"
         (calc-bits @byte-three) " | "
         (calc-bits @byte-four) " --- "
         @byte-one "." @byte-two "." @byte-three "." @byte-four
-        [ip-class {:one @byte-one :two @byte-two :three @byte-three :four @byte-four}
-         {:one @sub-one :two @sub-two :three @sub-three :four @sub-four}]]
+        [ip-class
+         {:one (js/parseInt @byte-one)
+          :two (js/parseInt @byte-two)
+          :three (js/parseInt @byte-three)
+          :four (js/parseInt @byte-four)}
+         {:one (js/parseInt @sub-one)
+          :two (js/parseInt @sub-two)
+          :three (js/parseInt @sub-three)
+          :four (js/parseInt @sub-four)}]]
        [subnet-mask]
        [network-address]
        [first-host]
