@@ -199,7 +199,7 @@ each octet"
    [:input {:type "text"
             :value @cidr
             :on-change (fn [e]
-                         (if (and (>= (-> e .-target .-value) 0 ) (<= (-> e .-target .-value) 30))
+                         (if (and (>= (-> e .-target .-value) 0 ) (< (-> e .-target .-value) 33))
                            (reset! cidr (-> e .-target .-value)))
                          (cidr->subnet (js/parseInt @cidr)))}]])
 
@@ -207,9 +207,10 @@ each octet"
   "Basic string input that updates an atom"
   [:input {:type "text"
            :value @value
-           :on-change #(reset! value (-> % .-target .-value))}])
-
-
+           :on-change (fn [e]
+                        (reset! value (-> e .-target .-value))
+                        (if (= (first @value) "0")
+                          (reset! value (rest @value))))}])
 
 (defn subnet-input [value validate]
   "Basic string input that updates an atom"
@@ -258,11 +259,28 @@ each octet"
               (recur (rest b))
               false)))))
 
-(defn cidr-31? [subnet]
-  false)
+(comment
+  (cidr-32? {:one "255" :two "255" :three "255" :four "255"})
+  (cidr-32? {:one "255" :two "255" :three "255" :four "250"})
+  (cidr-31? {:one "255" :two "255" :three "255" :four "254"})
+  (cidr<30? {:one "255" :two "255" :three "255" :four "128"})
+  (cidr<30? {:one "255" :two "255" :three "255" :four "251"})
+  (cidr-31? {:one "255" :two "255" :three "225" :four "254"}))
 
-(defn cidr-32? [subnet]
-  false)
+(defn cidr-31? [one two three four]
+  (if (and (= one "255")
+           (= two "255")
+           (= three "255")
+           (= four "254")) true false))
+
+(defn cidr-32? [one two three four]
+  (if (and (= one "255")
+           (= two "255")
+           (= three "255")
+           (= four "255")) true false))
+
+(defn cidr<30? [one two three four]
+  (if (or (cidr-31? one two three four) (cidr-32? one two three four)) false true))
 
 (defn ip-input-container [byte-one byte-two byte-three byte-four]
   "Componenet for the IP inputs including decimal notation sub net"
@@ -344,14 +362,14 @@ each octet"
      "." (last-subnet @sub-three (apply-mask->decimal @byte-three @sub-three))
      "." (- (js/parseInt (last-subnet @sub-four (apply-mask->decimal @byte-four @sub-four))) 1)]))
 
-(defn first-host []
+(defn first-host [message]
   "Component to display the first host address in a sub net in both binary and decimal formats"
   (fn []
-    [:p.mono "First host::::::::"
+    [:p.mono message
      (loop [bit-i 1 bits (bin->vec (str (calc-bits (apply-mask->decimal @byte-one @sub-one)) " | "
                                          (calc-bits (apply-mask->decimal @byte-two @sub-two)) " | "
                                          (calc-bits (apply-mask->decimal @byte-three @sub-three)) " | "
-                                         (calc-bits (+ 1(apply-mask->decimal @byte-four @sub-four)))))
+                                         (calc-bits (+ 1 (js/parseInt(apply-mask->decimal @byte-four @sub-four))))))
             spans '()]
        (if (empty? bits)
          spans
@@ -367,13 +385,13 @@ each octet"
      " : " (apply-mask->decimal @byte-one @sub-one)
      "." (apply-mask->decimal @byte-two @sub-two)
      "." (apply-mask->decimal @byte-three @sub-three)
-     "." (+ 1 (apply-mask->decimal @byte-four @sub-four))]))
+     "." (+ 1 (js/parseInt (apply-mask->decimal @byte-four @sub-four)))]))
 
 
-(defn network-address []
+(defn network-address [message]
   "Component to dispaly the network address of a sub net in both decimal and binary"
   (fn []
-    [:p.mono "Network Address:::"
+    [:p.mono message
      (loop [bit-i 1 bits (bin->vec (str (apply-mask @byte-one @sub-one) " | "
                                          (apply-mask @byte-two @sub-two) " | "
                                          (apply-mask @byte-three @sub-three) " | "
@@ -394,6 +412,26 @@ each octet"
      "." (apply-mask->decimal @byte-two @sub-two)
      "." (apply-mask->decimal @byte-three @sub-three)
      "." (apply-mask->decimal @byte-four @sub-four)]))
+
+(defn hosts-equation []
+  (fn []
+    (cond (cidr-31? @sub-one
+                  @sub-two
+                  @sub-three
+                  @sub-four)
+      [:span "--- Two IP addresses"]
+    (cidr-32? @sub-one
+                  @sub-two
+                  @sub-three
+                  @sub-four)
+      [:span "--- One IP addresses"]
+    (cidr<30? @sub-one
+                  @sub-two
+                  @sub-three
+                  @sub-four)
+    [:span " --- 2 ^ "
+       (host-bits @sub-one @sub-two @sub-three @sub-four) " - 2 is "
+     (- (exp 2 (host-bits @sub-one @sub-two @sub-three @sub-four)) 2) " hosts. "])))
 
 (defn subnet-mask []
   "Component to display a subnet mask in both binary and decimal formats."
@@ -417,10 +455,39 @@ each octet"
                                 [:span {:key bit-i :class "network"} " " (first bits) " "]))
                    :else (recur (inc bit-i) (rest bits)
                                 (conj spans [:span {:key bit-i :class "host"} " " (first bits) " "]))))))
-       " : "   @sub-one "." @sub-two "." @sub-three "." @sub-four " --- 2 ^ "
-       (host-bits @sub-one @sub-two @sub-three @sub-four) " - 2 is "
-       (- (exp 2 (host-bits @sub-one @sub-two @sub-three @sub-four)) 2) " hosts. "]
+       " : "   @sub-one "." @sub-two "." @sub-three "." @sub-four
+       [hosts-equation]]
       [:p.danger.mono "Subnet Mask::::::: Invalid Subnet Mask"])))
+
+(defn hosts []
+  (fn []
+    (if (cidr<30? @sub-one
+                  @sub-two
+                  @sub-three
+                  @sub-four)
+      [:div
+       [network-address "Network Address:::"]
+       [first-host "First host::::::::"]
+       [last-host]
+       [broadcast]])))
+
+(defn cidr-31 []
+  (fn []
+    (if (cidr-31? @sub-one
+                  @sub-two
+                  @sub-three
+                  @sub-four)
+      [:div
+      [network-address "First IP::::::::::"]
+      [first-host "Second IP:::::::::"]])))
+
+(defn cidr-32 []
+  (fn []
+    (if (cidr-32? @sub-one
+                  @sub-two
+                  @sub-three
+                  @sub-four)
+    [network-address "First IP::::::::::"])))
 
 (defn ipv4-subnet []
   "Main component. Entry point for the IPv4 caclculator."
@@ -455,10 +522,9 @@ each octet"
                 :four (js/parseInt @sub-four)}]])
          [:p.invalid-ip.mono "IP address:::::::: Invalid IP"])
        [subnet-mask]
-       [network-address]
-       [first-host]
-       [last-host]
-       [broadcast]]))
+       [cidr-31]
+       [cidr-32]
+       [hosts]]))
 
 ;; -------------------------
 ;; Initialize app
