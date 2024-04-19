@@ -27,14 +27,6 @@ a string representing the binary reprsentation."
        (recur dec-str (str bit-str "0 ") (- bit-pos 1))
        (recur (- dec-str (exp 2 bit-pos)) (str bit-str "1 ") (- bit-pos 1))))))
 
-(defn atom-input [value]
-  "Basic string input that updates an atom"
-  [:input {:type "text"
-           :value @value
-           :on-change #((if (and (>= (-> % .-target .-value) 0)
-                                 (<= (-> % .-target .-value) 255))
-                          (reset! value (-> % .-target .-value))))}])
-
 (defn apply-mask [ip-octet sub-octet]
   "Applies a subnet mask to an IP address by doing a bitwise comparison of
 the bits. The octets must be strings of 8 bits seperated by spaces."
@@ -49,7 +41,7 @@ represetation of the same value."
                        (bits->decimal bit-arr 0)))
 ([bits total]
  (if (= (count bits) 0)
-   total
+   (str total)
    (bits->decimal (rest bits) (if (= (first bits) "1")
                                 (+ total (exp 2 (- (count bits) 1)))
                                 total)))))
@@ -64,6 +56,7 @@ and returns a string of 1s and 0s seperated by spaces."
   (apply str (take 8 (drop drop-num bit-vec))))
 
 (defn host-bits [sub-one sub-two sub-three sub-four]
+  "Calculates the number of host bits from subnet mask"
   (let [mask (str
               (calc-bits sub-one) " "
               (calc-bits sub-two) " "
@@ -82,16 +75,19 @@ and returns a string of 1s and 0s seperated by spaces."
     (if (> (+ host-count octet) 255) "255" (str (+ host-count octet)))))
 
 (defn class-a-type [ip]
+  "Determine if a class c address is broadcast, network or host"
   (cond (= 255 (ip :two) (ip :three) (ip :four)) (str " broadcast")
         (= 0 (ip :two) (ip :three) (ip :four)) (str " network address")
         :else (str " host address")))
 
 (defn class-b-type [ip]
+  "Determine if a class c address is broadcast, network or host"
   (cond (= 255 (ip :three) (ip :four)) (str " broadcast")
         (= 0 (ip :three) (ip :four)) (str " network address")
         :else (str " host address")))
 
 (defn class-c-type [ip]
+  "Determine if a class c address is broadcast, network or host"
   (cond (= 255 (ip :four)) (str " broadcast")
         (= 0 (ip :four)) (str " network address")
         :else (str " host address")))
@@ -183,6 +179,7 @@ and returns a string of 1s and 0s seperated by spaces."
    [:input.cidr {:type "button" :value @toggle-cidr
             :on-click #(reset-subnet)}]])
 
+(comment (cidr->subnet 32))
 (defn cidr->subnet [cidr]
   "Takse a CIDR notation for a subnet mask and sets the decimal version.
 I.E.: 255 255 255 0"
@@ -206,17 +203,78 @@ each octet"
                            (reset! cidr (-> e .-target .-value)))
                          (cidr->subnet (js/parseInt @cidr)))}]])
 
-(defn ip-address [bit-one bit-two bit-three bit-four]
+(defn ip-input [value]
+  "Basic string input that updates an atom"
+  [:input {:type "text"
+           :value @value
+           :on-change #(reset! value (-> % .-target .-value))}])
+
+
+
+(defn subnet-input [value validate]
+  "Basic string input that updates an atom"
+  [:input {:type "text"
+           :value @value
+           :on-change #((if (validate)
+                          (reset! value (-> % .-target .-value))))}])
+
+(comment (validate-prev-bytes ["255" "255"  "255"])
+         (vec (filter #(not (= % 0)) ["255" 0 0 0]))
+         (valid-bit '("12" "255") "0")
+         (validate-subnet ["0" "0" "0" "0"])
+         (first '("255" "255" "255"))
+         (some #(= % "128") ["255" "128"])
+
+         (if (nil) true false)
+         (validate-ip ["255" "112" "22"]))
+
+(def valid-subnets ["255" "254" "253" "248" "240" "224" "192" "128"])
+
+(defn valid-rest-bytes? [bytes]
+  (loop [b bytes]
+    (if (empty? b) true
+        (if (= (first b) "255")
+          (recur (rest b))
+          false))))
+
+(defn valid-subnet-byte? [bytes last]
+  (if (some #(= % last) valid-subnets)
+    (valid-rest-bytes? bytes)
+    false))
+
+(defn validate-subnet [bytes]
+  (loop [b bytes]
+    (if (empty? b) true
+        (if (= "0" (first b))
+          (recur (rest b))
+          (valid-subnet-byte? (rest b) (first b))))))
+
+(defn validate-ip [bytes]
+  (if (empty? bytes) true
+      (loop [b bytes]
+        (if (empty? b) true
+            (if (and (>= (first b) 0)
+                     (<= (first b) 255))
+              (recur (rest b))
+              false)))))
+
+(defn cidr-31? [subnet]
+  false)
+
+(defn cidr-32? [subnet]
+  false)
+
+(defn ip-input-container [byte-one byte-two byte-three byte-four]
   "Componenet for the IP inputs including decimal notation sub net"
     (fn []
       [:div.ip-input
-       [atom-input bit-one]
+       [ip-input byte-one]
        [:span " . "]
-       [atom-input bit-two]
+       [ip-input byte-two]
        [:span " . "]
-       [atom-input bit-three]
+       [ip-input byte-three]
        [:span " . "]
-       [atom-input bit-four]]))
+       [ip-input byte-four]]))
 
 (defn broadcast []
   "Component to display broadcast address in binary and decimal formats"
@@ -253,7 +311,6 @@ each octet"
      "." (last-subnet @sub-two (apply-mask->decimal @byte-two @sub-two))
      "." (last-subnet @sub-three (apply-mask->decimal @byte-three @sub-three))
      "." (last-subnet @sub-four (apply-mask->decimal @byte-four @sub-four))]))
-
 
 (defn last-host []
   "Componenet to display the last host of a subnet in both decimal and binary formats"
@@ -341,27 +398,29 @@ each octet"
 (defn subnet-mask []
   "Component to display a subnet mask in both binary and decimal formats."
   (fn []
-    [:p.mono "Subnet Mask:::::::"
-     (loop [bit-i 1 bits (bin->vec (str (calc-bits @sub-one) " | "
-                                         (calc-bits @sub-two) " | "
-                                         (calc-bits @sub-three) " | "
-                                         (calc-bits @sub-four)))
-            spans '()]
-       (if (empty? bits)
-         spans
-         (if (= "|" (first bits))
-           (recur bit-i (rest bits)
-                  (conj spans 
-                        [:span {:key (str bit-i "-div") :class "divider"} " " (first bits) " "]))
-           (cond (< (host-bits @sub-one @sub-two @sub-three @sub-four) bit-i)
-                 (recur (inc bit-i) (rest bits)
-                        (conj spans 
-                             [:span {:key bit-i :class "network"} " " (first bits) " "]))
-                 :else (recur (inc bit-i) (rest bits)
-                             (conj spans [:span {:key bit-i :class "host"} " " (first bits) " "]))))))
-     " : "   @sub-one "." @sub-two "." @sub-three "." @sub-four " --- 2 ^ "
-     (host-bits @sub-one @sub-two @sub-three @sub-four) " - 2 is "
-     (- (exp 2 (host-bits @sub-one @sub-two @sub-three @sub-four)) 2) " hosts. "]))
+    (if (validate-subnet [@sub-four @sub-three @sub-two @sub-one])
+      [:p.mono "Subnet Mask:::::::"
+       (loop [bit-i 1 bits (bin->vec (str (calc-bits @sub-one) " | "
+                                          (calc-bits @sub-two) " | "
+                                          (calc-bits @sub-three) " | "
+                                          (calc-bits @sub-four)))
+              spans '()]
+         (if (empty? bits)
+           spans
+           (if (= "|" (first bits))
+             (recur bit-i (rest bits)
+                    (conj spans 
+                          [:span {:key (str bit-i "-div") :class "divider"} " " (first bits) " "]))
+             (cond (< (host-bits @sub-one @sub-two @sub-three @sub-four) bit-i)
+                   (recur (inc bit-i) (rest bits)
+                          (conj spans 
+                                [:span {:key bit-i :class "network"} " " (first bits) " "]))
+                   :else (recur (inc bit-i) (rest bits)
+                                (conj spans [:span {:key bit-i :class "host"} " " (first bits) " "]))))))
+       " : "   @sub-one "." @sub-two "." @sub-three "." @sub-four " --- 2 ^ "
+       (host-bits @sub-one @sub-two @sub-three @sub-four) " - 2 is "
+       (- (exp 2 (host-bits @sub-one @sub-two @sub-three @sub-four)) 2) " hosts. "]
+      [:p.danger.mono "Subnet Mask::::::: Invalid Subnet Mask"])))
 
 (defn ipv4-subnet []
   "Main component. Entry point for the IPv4 caclculator."
@@ -370,29 +429,31 @@ each octet"
        [:form.ip-input
        [:label "IP Address"]
        [:label.subnet "Subnet Mask"]
-       [ip-address byte-one byte-two byte-three byte-four]
+       [ip-input-container byte-one byte-two byte-three byte-four]
         [:div.subnet
        (if (= @toggle-cidr "Toggle Input: CIDR")
-         [ip-address sub-one sub-two sub-three sub-four]
+         [ip-input-container sub-one sub-two sub-three sub-four]
          [input-cidr])
        [toggle-cidr-button]]]
        [:p.mono [:span.network "Network bits |"][:span.host " Host Bits"]]
-       [:p.mono
-        "IP address::::::::  "
-        (calc-bits @byte-one) " | "
-        (calc-bits @byte-two) " | "
-        (calc-bits @byte-three) " | "
-        (calc-bits @byte-four) " : "
-        @byte-one "." @byte-two "." @byte-three "." @byte-four
-        [ip-class
-         {:one (js/parseInt @byte-one)
-          :two (js/parseInt @byte-two)
-          :three (js/parseInt @byte-three)
-          :four (js/parseInt @byte-four)}
-         {:one (js/parseInt @sub-one)
-          :two (js/parseInt @sub-two)
-          :three (js/parseInt @sub-three)
-          :four (js/parseInt @sub-four)}]]
+       (if (validate-ip [@byte-one @byte-two @byte-three @byte-four])
+         (do [:p.mono
+              "IP address::::::::  "
+              (calc-bits @byte-one) " | "
+              (calc-bits @byte-two) " | "
+              (calc-bits @byte-three) " | "
+              (calc-bits @byte-four) " : "
+              @byte-one "." @byte-two "." @byte-three "." @byte-four
+              [ip-class
+               {:one (js/parseInt @byte-one)
+                :two (js/parseInt @byte-two)
+                :three (js/parseInt @byte-three)
+                :four (js/parseInt @byte-four)}
+               {:one (js/parseInt @sub-one)
+                :two (js/parseInt @sub-two)
+                :three (js/parseInt @sub-three)
+                :four (js/parseInt @sub-four)}]])
+         [:p.invalid-ip.mono "IP address:::::::: Invalid IP"])
        [subnet-mask]
        [network-address]
        [first-host]
