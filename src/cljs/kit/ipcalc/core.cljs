@@ -210,7 +210,9 @@ each octet"
            :on-change (fn [e]
                         (reset! value (-> e .-target .-value))
                         (if (= (first @value) "0")
-                          (reset! value (rest @value))))}])
+                          (reset! value (rest @value)))
+                        (if (= (first (reverse @value)) ".")
+                          (reset! value (apply str (reverse (rest (reverse @value)))))))}])
 
 (defn subnet-input [value validate]
   "Basic string input that updates an atom"
@@ -229,9 +231,10 @@ each octet"
          (if (nil) true false)
          (validate-ip ["255" "112" "22"]))
 
-(def valid-subnets ["255" "254" "253" "248" "240" "224" "192" "128"])
+(def valid-subnets ["255" "254" "252" "248" "240" "224" "192" "128"])
 
 (defn valid-rest-bytes? [bytes]
+  "Check if list of bytes are all 255"
   (loop [b bytes]
     (if (empty? b) true
         (if (= (first b) "255")
@@ -239,11 +242,13 @@ each octet"
           false))))
 
 (defn valid-subnet-byte? [bytes last]
+  "Check if a subnet byte ie valid"
   (if (some #(= % last) valid-subnets)
     (valid-rest-bytes? bytes)
     false))
 
 (defn validate-subnet [bytes]
+  "Validate subnet mask bytes"
   (loop [b bytes]
     (if (empty? b) true
         (if (= "0" (first b))
@@ -251,6 +256,7 @@ each octet"
           (valid-subnet-byte? (rest b) (first b))))))
 
 (defn validate-ip [bytes]
+  "Test if ip bytes are valid."
   (if (empty? bytes) true
       (loop [b bytes]
         (if (empty? b) true
@@ -259,28 +265,24 @@ each octet"
               (recur (rest b))
               false)))))
 
-(comment
-  (cidr-32? {:one "255" :two "255" :three "255" :four "255"})
-  (cidr-32? {:one "255" :two "255" :three "255" :four "250"})
-  (cidr-31? {:one "255" :two "255" :three "255" :four "254"})
-  (cidr<30? {:one "255" :two "255" :three "255" :four "128"})
-  (cidr<30? {:one "255" :two "255" :three "255" :four "251"})
-  (cidr-31? {:one "255" :two "255" :three "225" :four "254"}))
-
 (defn cidr-31? [one two three four]
+  "Check if subnet mask is cidr /31"
   (if (and (= one "255")
            (= two "255")
            (= three "255")
            (= four "254")) true false))
 
 (defn cidr-32? [one two three four]
+  "Check if subnet mask is cidr /32"
   (if (and (= one "255")
            (= two "255")
            (= three "255")
            (= four "255")) true false))
 
 (defn cidr<30? [one two three four]
-  (if (or (cidr-31? one two three four) (cidr-32? one two three four)) false true))
+  "Check if a subnet mask is 30 or lower."
+  (if (or (cidr-31? one two three four)
+          (cidr-32? one two three four)) false true))
 
 (defn ip-input-container [byte-one byte-two byte-three byte-four]
   "Componenet for the IP inputs including decimal notation sub net"
@@ -387,7 +389,6 @@ each octet"
      "." (apply-mask->decimal @byte-three @sub-three)
      "." (+ 1 (js/parseInt (apply-mask->decimal @byte-four @sub-four)))]))
 
-
 (defn network-address [message]
   "Component to dispaly the network address of a sub net in both decimal and binary"
   (fn []
@@ -404,10 +405,16 @@ each octet"
                   (conj spans 
                         [:span {:key (str bit-i "-div") :class "divider"} " " (first bits) " "]))
            (cond (< (host-bits @sub-one @sub-two @sub-three @sub-four) bit-i)
-                 (recur (inc bit-i) (rest bits) (conj spans 
-                                                      [:span {:key bit-i :class "network"} " " (first bits) " "]))
-                 :else (recur (inc bit-i) (rest bits) (conj spans 
-                                                            [:span {:key bit-i :class "host"} " " (first bits) " "]))))))
+                 (recur (inc bit-i)
+                        (rest bits)
+                        (conj spans 
+                              [:span {:key bit-i :class "network"}
+                               " " (first bits) " "]))
+                 :else (recur (inc bit-i)
+                              (rest bits)
+                              (conj spans 
+                                    [:span {:key bit-i :class "host"}
+                                     " " (first bits) " "]))))))
      " : " (apply-mask->decimal @byte-one @sub-one)
      "." (apply-mask->decimal @byte-two @sub-two)
      "." (apply-mask->decimal @byte-three @sub-three)
