@@ -15,7 +15,7 @@
 
 (defn calc-bits ([dec-str]
                  "Takes a decimal number between 0 and 255 and returns
-a string representing the binary reprsentation."
+a string representing the binary bits."
                  (cond
                    (> dec-str 255) (str "Max is 255")
                    (< dec-str 128) (calc-bits dec-str "0 " 6)

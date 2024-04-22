@@ -1,4 +1,17 @@
-# ipcalc
+# IP Subnetting Calculator
+
+A subnetting calculator that applies a subnet mask to an IP address and displays
+the result in both doted decimal notation and as a string representing the 32 bit binary
+values. It also determines first and last host, IP class, and number of hosts.
+
+## Building
+
+requires (https://github.com/seancorfield/clj-new)[clj-new] and
+(https://clojure.org/)[Clojure] to build and run.
+
+To build run `clj -Sforce -T:build all` and then `java -jar ipcalc-standalone.jar`
+
+## Usage
 
 Start a [REPL](#repls) in your editor or terminal of choice.
 
@@ -7,8 +20,6 @@ Start the server with:
 ```clojure
 (go)
 ```
-
-The default API is available under http://localhost:3000/api
 
 System configuration is available under `resources/system.edn`.
 
