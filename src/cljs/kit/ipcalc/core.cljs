@@ -13,13 +13,13 @@
      (if (zero? n) 1
          (* x (exp x (dec n)))))
 
-(defn calc-bits ([dec-str]
+(defn decimal->str ([dec-str]
                  "Takes a decimal number between 0 and 255 and returns
 a string representing the binary bits."
                  (cond
                    (> dec-str 255) (str "Max is 255")
-                   (< dec-str 128) (calc-bits dec-str "0 " 6)
-                   (>= dec-str 128) (calc-bits (- dec-str 128) "1 " 6)))
+                   (< dec-str 128) (decimal->str dec-str "0 " 6)
+                   (>= dec-str 128) (decimal->str (- dec-str 128) "1 " 6)))
   ([dec-str bit-str bit-pos]
    (if (= bit-pos 0)
      (str bit-str dec-str)
@@ -27,12 +27,34 @@ a string representing the binary bits."
        (recur dec-str (str bit-str "0 ") (- bit-pos 1))
        (recur (- dec-str (exp 2 bit-pos)) (str bit-str "1 ") (- bit-pos 1))))))
 
+(defn decimal->vec ([dec-str]
+                 "Takes a decimal number between 0 and 255 and returns
+a vector representing the binary bits."
+                 (cond
+                   (> dec-str 255) (str "Max is 255")
+                   (< dec-str 128) (decimal->vec dec-str [0] 6)
+                   (>= dec-str 128) (decimal->vec (- dec-str 128) [1] 6)))
+  ([dec-str bit-vec bit-pos]
+   (if (= bit-pos 0)
+     (conj bit-vec (js/parseInt dec-str))
+     (if (< dec-str (exp 2 bit-pos))
+       (recur dec-str (conj bit-vec 0) (- bit-pos 1))
+       (recur (- dec-str (exp 2 bit-pos)) (conj bit-vec 1) (- bit-pos 1))))))
+
+(defn bit-vec->str [v]
+  (str/trim (apply str (map #(str % " ") v ))))
+
+(comment
+  (conj [0] 1)
+  (bit-vec->str (calc-bits-vec "9")))
+
+
 (defn apply-mask [ip-octet sub-octet]
   "Applies a subnet mask to an IP address by doing a bitwise comparison of
 the bits. The octets must be strings of 8 bits seperated by spaces."
-  (let [ip (str/split (calc-bits ip-octet) " ")
-        sub (str/split (calc-bits sub-octet) " ")]
-    (str/trim (apply str (map #(if (and (= %1 "1") (= %2 "1")) "1 " "0 ") ip sub)))))
+  (let [ip (decimal->vec ip-octet)
+        sub (decimal->vec sub-octet)]
+    (str/trim (apply str (map #(if (and (= %1 1) (= %2 1)) "1 " "0 ") ip sub)))))
 
 (defn bits->decimal ([bits]
                      "Takes a string representing bits and returns a decimal
@@ -58,10 +80,10 @@ and returns a string of 1s and 0s seperated by spaces."
 (defn host-bits [sub-one sub-two sub-three sub-four]
   "Calculates the number of host bits from subnet mask"
   (let [mask (str
-              (calc-bits sub-one) " "
-              (calc-bits sub-two) " "
-              (calc-bits sub-three) " "
-              (calc-bits sub-four))]
+              (decimal->str sub-one) " "
+              (decimal->str sub-two) " "
+              (decimal->str sub-three) " "
+              (decimal->str sub-four))]
     (count (filter #(= % "0") (str/split mask " ")))))
 
 (defn apply-mask->decimal [ip-octet sub-octet]
@@ -179,7 +201,6 @@ and returns a string of 1s and 0s seperated by spaces."
    [:input.cidr {:type "button" :value @toggle-cidr
             :on-click #(reset-subnet)}]])
 
-(comment (cidr->subnet 32))
 (defn cidr->subnet [cidr]
   "Takse a CIDR notation for a subnet mask and sets the decimal version.
 I.E.: 255 255 255 0"
@@ -292,16 +313,16 @@ each octet"
   "Create vector of bytes for display in componenet `broadcast`"
   (bin->vec
    (str
-    (calc-bits
+    (decimal->str
      (last-subnet sub-one
                   (apply-mask->decimal byte-one sub-one))) " | "
-    (calc-bits
+    (decimal->str
      (last-subnet sub-two
                   (apply-mask->decimal byte-two sub-two))) " | "
-    (calc-bits
+    (decimal->str
      (last-subnet sub-three
                   (apply-mask->decimal byte-three sub-three))) " | "
-    (calc-bits
+    (decimal->str
      (last-subnet sub-four
                   (apply-mask->decimal byte-four sub-four))) " ")))
 
@@ -341,13 +362,13 @@ each octet"
   "Create vector of bytes for display in componenet `last-host`"
   (bin->vec
    (str
-    (calc-bits
+    (decimal->str
      (last-subnet sub-one (apply-mask->decimal byte-one sub-one))) " | "
-    (calc-bits
+    (decimal->str
      (last-subnet sub-two (apply-mask->decimal byte-two sub-two))) " | "
-    (calc-bits
+    (decimal->str
      (last-subnet sub-three (apply-mask->decimal byte-three sub-three))) " | "
-    (calc-bits (- (js/parseInt
+    (decimal->str (- (js/parseInt
                    (last-subnet sub-four
                                 (apply-mask->decimal byte-four sub-four))) 1)))))
 
@@ -384,10 +405,10 @@ each octet"
 (defn first-vec [byte-one byte-two byte-three byte-four
                  sub-one sub-two sub-three sub-four]
   "Create vector of bytes for display in componenet `first-host`"
-  (bin->vec (str (calc-bits (apply-mask->decimal byte-one sub-one)) " | "
-                 (calc-bits (apply-mask->decimal byte-two sub-two)) " | "
-                 (calc-bits (apply-mask->decimal byte-three sub-three)) " | "
-                 (calc-bits (+ 1 (js/parseInt(apply-mask->decimal byte-four sub-four)))))))
+  (bin->vec (str (decimal->str (apply-mask->decimal byte-one sub-one)) " | "
+                 (decimal->str (apply-mask->decimal byte-two sub-two)) " | "
+                 (decimal->str (apply-mask->decimal byte-three sub-three)) " | "
+                 (decimal->str (+ 1 (js/parseInt(apply-mask->decimal byte-four sub-four)))))))
 
 (defn first-host [message]
   "Component to display the first host address in a sub net in both binary and decimal formats"
@@ -480,10 +501,10 @@ each octet"
   (fn []
     (if (validate-subnet [@sub-four @sub-three @sub-two @sub-one])
       [:p.mono "Subnet Mask:::::::"
-       (loop [bit-i 1 bits (bin->vec (str (calc-bits @sub-one) " | "
-                                          (calc-bits @sub-two) " | "
-                                          (calc-bits @sub-three) " | "
-                                          (calc-bits @sub-four)))
+       (loop [bit-i 1 bits (bin->vec (str (decimal->str @sub-one) " | "
+                                          (decimal->str @sub-two) " | "
+                                          (decimal->str @sub-three) " | "
+                                          (decimal->str @sub-four)))
               spans '()]
          (if (empty? bits)
            spans
@@ -548,10 +569,10 @@ each octet"
        (if (validate-ip [@byte-one @byte-two @byte-three @byte-four])
          (do [:p.mono
               "IP address::::::::  "
-              (calc-bits @byte-one) " | "
-              (calc-bits @byte-two) " | "
-              (calc-bits @byte-three) " | "
-              (calc-bits @byte-four) " : "
+              (decimal->str @byte-one) " | "
+              (decimal->str @byte-two) " | "
+              (decimal->str @byte-three) " | "
+              (decimal->str @byte-four) " : "
               @byte-one "." @byte-two "." @byte-three "." @byte-four
               [ip-class
                {:one (js/parseInt @byte-one)
